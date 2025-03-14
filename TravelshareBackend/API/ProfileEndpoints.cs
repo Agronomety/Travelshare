@@ -28,8 +28,8 @@ namespace TravelshareBackend.API
                     return Results.NotFound();
                 }
 
-                return Results.Ok(new { user.FirstName, user.LastName, user.Email });
-            }).RequireAuthorization();
+                return Results.Ok(new { Id = user.Id, user.FirstName, user.LastName, user.Email });
+            });
 
 
             app.MapPut("api/user/password", async (HttpContext context, AppDbContext db) =>
@@ -150,6 +150,46 @@ namespace TravelshareBackend.API
 
                 return Results.NoContent();
             }).RequireAuthorization();
+
+
+
+            app.MapGet("/api/user/posts", async (HttpContext context, AppDbContext db) =>
+            {
+                if (!int.TryParse(context.Request.Query["userId"], out var userId))
+                {
+                    return Results.BadRequest("UserId is required.");
+                }
+
+                var page = int.TryParse(context.Request.Query["page"], out var pageValue) ? pageValue : 1;
+                var pageSize = int.TryParse(context.Request.Query["pageSize"], out var pageSizeValue) ? pageSizeValue : 5;
+
+                var userPosts = await db.BlogPosts
+                    .Where(post => post.UserId == userId)
+                    .OrderByDescending(post => post.CreatedDate)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+
+                if (!userPosts.Any())
+                {
+                    return Results.NotFound("No posts found for this user.");
+                }
+
+                var totalItems = await db.BlogPosts.CountAsync(post => post.UserId == userId);
+                var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+                var response = new
+                {
+                    Page = page,
+                    PageSize = pageSize,
+                    TotalItems = totalItems,
+                    TotalPages = totalPages,
+                    BlogPosts = userPosts
+                };
+
+                return Results.Ok(response);
+            });
+
         }
     }
 }

@@ -3,6 +3,9 @@
 @inject HttpClient Http
 @inject AuthService AuthService
 @inject NavigationManager Navigation
+@using TravelshareBlazor.Models
+
+
 
 <div class="proflie-container">
     <div class="row">
@@ -242,13 +245,23 @@
                 return;
             }
 
-            var request = new HttpRequestMessage(HttpMethod.Get, $"/api/user/posts?page={currentPage}&pageSize={pageSize}");
+            if (user == null || user.Id == 0)
+            {
+                Console.WriteLine("User ID not available");
+                return;
+            }
+
+            var request = new HttpRequestMessage(HttpMethod.Get, 
+                $"/api/user/posts?userId={user.Id}&page={currentPage}&pageSize={pageSize}");
+            
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
             var response = await Http.SendAsync(request);
 
             if (response.IsSuccessStatusCode)
             {
                 var responseData = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Success response: {responseData}");
+                
                 var parsedData = System.Text.Json.JsonSerializer.Deserialize<PaginationResponse>(responseData, 
                     new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
@@ -260,12 +273,15 @@
             }
             else
             {
-                Console.WriteLine($"Error loading user posts: {response.StatusCode}");
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Error loading user posts: {response.StatusCode}. Details: {errorContent}");
+                errorMessage = "Failed to load your blog posts.";
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Exception loading user posts: {ex.Message}");
+            errorMessage = "An error occurred while loading your posts.";
         }
         finally
         {
@@ -302,12 +318,7 @@
         Navigation.NavigateTo("/");
     }
 
-    private class User
-    {
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
-        public string Email { get; set; }
-    }
+
 
     private class UserStats
     {
