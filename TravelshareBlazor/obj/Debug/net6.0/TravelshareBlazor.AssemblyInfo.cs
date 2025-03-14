@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TravelshareBlazor")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+df49e147f1b4009c0ac635b7a7e9a20d7bbefd98")]
 [assembly: System.Reflection.AssemblyProductAttribute("TravelshareBlazor")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TravelshareBlazor")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

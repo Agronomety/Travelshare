@@ -43,3 +43,4 @@ C:\VS Studio Projects\Travelshare\TravelshareBlazor\obj\Debug\net6.0\refint\Trav
 C:\VS Studio Projects\Travelshare\TravelshareBlazor\obj\Debug\net6.0\TravelshareBlazor.pdb
 C:\VS Studio Projects\Travelshare\TravelshareBlazor\obj\Debug\net6.0\TravelshareBlazor.genruntimeconfig.cache
 C:\VS Studio Projects\Travelshare\TravelshareBlazor\obj\Debug\net6.0\ref\TravelshareBlazor.dll
+C:\VS Studio Projects\Travelshare\TravelshareBlazor\obj\Debug\net6.0\TravelshareBlazor.sourcelink.json

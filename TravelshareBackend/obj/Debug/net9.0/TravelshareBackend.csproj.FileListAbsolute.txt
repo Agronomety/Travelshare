@@ -174,3 +174,4 @@ C:\VS Studio Projects\Travelshare\TravelshareBackend\obj\Debug\net9.0\refint\Tra
 C:\VS Studio Projects\Travelshare\TravelshareBackend\obj\Debug\net9.0\TravelshareBackend.pdb
 C:\VS Studio Projects\Travelshare\TravelshareBackend\obj\Debug\net9.0\TravelshareBackend.genruntimeconfig.cache
 C:\VS Studio Projects\Travelshare\TravelshareBackend\obj\Debug\net9.0\ref\TravelshareBackend.dll
+C:\VS Studio Projects\Travelshare\TravelshareBackend\obj\Debug\net9.0\TravelshareBackend.sourcelink.json
