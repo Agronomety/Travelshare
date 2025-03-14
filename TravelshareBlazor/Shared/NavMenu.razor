@@ -1,0 +1,85 @@
+﻿@inject AuthenticationStateProvider AuthStateProvider
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@using Microsoft.AspNetCore.Components.Authorization
+
+<div class="container">
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <h1 class="logo">Travelshare</h1>
+            </a>
+            <button class="navbar-toggler" type="button" @onclick="ToggleNavMenu" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="@NavMenuCssClass navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                            Home
+                        </NavLink>
+                    </li>
+                    <li class="nav-item">
+                        <NavLink class="nav-link" href="blogposts">
+                            Destinations
+                        </NavLink>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <AuthorizeView>
+                        <NotAuthorized>
+                            <li class="nav-item">
+                                <NavLink class="nav-link btn btn-outline-primary me-2" href="login">
+                                    <i class="fas fa-sign-in-alt me-1"></i> Sign In
+                                </NavLink>
+                            </li>
+                            <li class="nav-item">
+                                <NavLink class="nav-link btn btn-primary" href="register">
+                                    <i class="fas fa-user-plus me-1"></i> Join Now
+                                </NavLink>
+                            </li>
+                        </NotAuthorized>
+                        <Authorized>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-user-circle me-1"></i> My Account
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <NavLink class="dropdown-item" href="profile">
+                                            <i class="fas fa-user me-1"></i> Profile
+                                        </NavLink>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <button class="dropdown-item" @onclick="Logout">
+                                            <i class="fas fa-sign-out-alt me-1"></i> Logout
+                                        </button>
+                                    </li>
+                                </ul>
+                            </li>
+                        </Authorized>
+                    </AuthorizeView>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+
+    private async Task Logout()
+    {
+        await AuthService.Logout();
+        await AuthStateProvider.GetAuthenticationStateAsync();
+        StateHasChanged();
+        Navigation.NavigateTo("/login", forceLoad: true); 
+    }
+}
