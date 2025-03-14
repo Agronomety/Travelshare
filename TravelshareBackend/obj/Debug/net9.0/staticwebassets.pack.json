@@ -1,0 +1,29 @@
+{
+  "Files": [
+    {
+      "Id": "C:\\VS Studio Projects\\Travelshare\\TravelshareBackend\\wwwroot\\uploads\\52-1.jpeg",
+      "PackagePath": "staticwebassets\\uploads\\52-1.jpeg"
+    },
+    {
+      "Id": "obj\\Debug\\net9.0\\staticwebassets\\msbuild.TravelshareBackend.Microsoft.AspNetCore.StaticWebAssetEndpoints.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssetEndpoints.props"
+    },
+    {
+      "Id": "obj\\Debug\\net9.0\\staticwebassets\\msbuild.TravelshareBackend.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj\\Debug\\net9.0\\staticwebassets\\msbuild.build.TravelshareBackend.props",
+      "PackagePath": "build\\TravelshareBackend.props"
+    },
+    {
+      "Id": "obj\\Debug\\net9.0\\staticwebassets\\msbuild.buildMultiTargeting.TravelshareBackend.props",
+      "PackagePath": "buildMultiTargeting\\TravelshareBackend.props"
+    },
+    {
+      "Id": "obj\\Debug\\net9.0\\staticwebassets\\msbuild.buildTransitive.TravelshareBackend.props",
+      "PackagePath": "buildTransitive\\TravelshareBackend.props"
+    }
+  ],
+  "ElementsToRemove": []
+}

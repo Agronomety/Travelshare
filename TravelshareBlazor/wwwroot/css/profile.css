@@ -1,0 +1,13 @@
+.profile-container {
+    padding: 4rem 0;
+    min-height: calc(100vh - 80px); 
+    background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/images/backgroundImages/lake4.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+
+
+.profile-container .card {
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2) !important;
+}

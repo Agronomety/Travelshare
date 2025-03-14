@@ -1,0 +1,532 @@
+@page "/blogposts"
+@using System.Security.Claims
+@using System.Text.Json
+@inject HttpClient Http
+@inject AuthenticationStateProvider AuthStateProvider
+
+<div class="blog-header py-5 text-center" style="background-image: url('/images/backgroundImages/tropic2.jpg'); background-size: cover; background-position: center;">
+    <div class="container">
+        <h1 class="display-4 text-white fw-bold">Travel Adventures</h1>
+        <p class="lead text-white">Discover amazing destinations through our travelers' experiences</p>
+    </div>
+</div>
+
+<div class="container my-5">
+    <div class="row">
+        <div class="col-md-9">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="section-title mb-0">Blog Posts <span class="text-muted fs-6">(@totalItems results)</span></h2>
+                <p class="text-muted mb-0"><em>Last updated: @lastUpdated.ToString("g")</em></p>
+            </div>
+
+            <!-- Search and Filter Bar -->
+            <div class="search-filter-container mb-4">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <input type="text" class="form-control" @bind="searchQuery" placeholder="Search blog posts..." />
+                            <button class="btn btn-primary" @onclick="SearchPosts">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <select @bind="selectedFilter" class="form-select">
+                            <option value="">Sort by</option>
+                            <option value="likes">Most Liked</option>
+                            <option value="comments">Most Commented</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            @if (isAuthenticated)
+            {
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Create New Blog Post</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <input type="text" class="form-control" @bind="newPostTitle" placeholder="Enter title..." />
+                        </div>
+                        <div class="mb-3">
+                            <textarea class="form-control" @bind="newPostContent" placeholder="Write your blog post..." rows="4"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Upload Image</label>
+                            <InputFile OnChange="HandleFileChange" class="form-control" />
+                        </div>
+                        <button class="btn btn-primary" @onclick="CreateBlogPost">
+                            <i class="fas fa-paper-plane me-1"></i> Publish Post
+                        </button>
+                    </div>
+                </div>
+            }
+
+            <!-- Blog Post List -->
+            @if (blogPosts.Count == 0)
+            {
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> No results found. Try a different search.
+                </div>
+            }
+            else
+            {
+                <div class="row g-4">
+                    @foreach (var post in blogPosts)
+                    {
+                        <div class="col-md-6">
+                            <div class="card blog-card h-100 shadow-sm">
+                                @if (!string.IsNullOrEmpty(post.ImageBase64))
+                                {
+                                    <img src="data:image/png;base64,@post.ImageBase64" class="card-img-top" alt="Blog Image" />
+                                }
+                                else
+                                {
+                                    <div class="placeholder-image bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                        <i class="fas fa-image text-muted fa-3x"></i>
+                                    </div>
+                                }
+                                <div class="card-body">
+                                    <h5 class="card-title">@post.Title</h5>
+                                    <div class="content-container @(expandedPosts.Contains(post.Id) ? "expanded" : "collapsed")">
+                                        <p class="card-text">
+                                            @if (expandedPosts.Contains(post.Id))
+                                            {
+                                                @post.Content
+                                            }
+                                            else
+                                            {
+                                                @(post.Content.Length > 100 ? post.Content.Substring(0, 100) + "..." : post.Content)
+                                            }
+                                        </p>
+                                    </div>
+                                    <button class="btn btn-link p-0 text-decoration-none" @onclick="() => TogglePostExpansion(post.Id)">
+                                        @(expandedPosts.Contains(post.Id) ? "Show Less" : "Read More") 
+                                        <i class="fas fa-chevron-@(expandedPosts.Contains(post.Id) ? "up" : "down") ms-1"></i>
+                                    </button>
+                                </div>
+                                <div class="card-footer bg-white">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="btn-group">
+                                            <button @onclick="() => ToggleLike(post.Id)" class="btn btn-sm btn-outline-primary">
+                                                <i class="@(post.Likes.Any(like => like.UserId == userId) ? "fas" : "far") fa-heart me-1"></i>
+                                                @post.Likes.Count
+                                            </button>
+                                            <button @onclick="() => ToggleComments(post.Id)" class="btn btn-sm btn-outline-secondary">
+                                                <i class="far fa-comment me-1"></i>
+                                                @post.Comments.Count
+                                            </button>
+                                        </div>
+                                        <small class="text-muted">3 days ago</small>
+                                    </div>
+                                    
+                                    <!-- Comment Section -->
+                                    @if (expandedComments.Contains(post.Id))
+                                    {
+                                        <div class="comments-section mt-3">
+                                            <hr />
+                                            <h6 class="fw-bold">Comments</h6>
+                                            @if (post.Comments.Count == 0)
+                                            {
+                                                <p class="text-muted small">No comments yet.</p>
+                                            }
+                                            else
+                                            {
+                                                <ul class="list-unstyled">
+                                                    @foreach (var comment in post.Comments)
+                                                    {
+                                                        <li class="mb-2">
+                                                            <div class="d-flex">
+                                                                <div class="comment-avatar me-2">
+                                                                    <i class="fas fa-user-circle fa-2x text-muted"></i>
+                                                                </div>
+                                                                <div>
+                                                                    <h6 class="mb-0 fs-6">@comment.UserFullName</h6>
+                                                                    <p class="mb-0 small">@comment.Content</p>
+                                                                </div>
+                                                            </div>
+                                                        </li>
+                                                    }
+                                                </ul>
+                                            }
+
+
+                                            @if (isAuthenticated)
+                                            {
+                                                <div class="add-comment-form mt-3">
+                                                    <div class="input-group">
+                                                        <input type="text" class="form-control form-control-sm" @bind="newCommentContent" placeholder="Write a comment..." />
+                                                        <button class="btn btn-sm btn-primary" @onclick="() => SubmitComment(post.Id)">
+                                                            <i class="fas fa-paper-plane"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- Pagination -->
+                <nav aria-label="Page navigation" class="my-4">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item @(!HasPreviousPage ? "disabled" : "")">
+                            <button class="page-link" @onclick="PreviousPage" disabled="@(!HasPreviousPage)">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                        </li>
+                        @for (int i = 1; i <= totalPages; i++)
+                        {
+                            var pageNumber = i;
+                            <li class="page-item @(pageNumber == currentPage ? "active" : "")">
+                                <button class="page-link" @onclick="() => GoToPage(pageNumber)">@pageNumber</button>
+                            </li>
+                        }
+                        <li class="page-item @(!HasNextPage ? "disabled" : "")">
+                            <button class="page-link" @onclick="NextPage" disabled="@(!HasNextPage)">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </li>
+                    </ul>
+                </nav>
+            }
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-md-3">
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">About Travelshare</h5>
+                </div>
+                <div class="card-body">
+                    <p>Share your travel adventures and discover new destinations from fellow travelers around the world.</p>
+                    @if (!isAuthenticated)
+                    {
+                        <a href="/register" class="btn btn-primary btn-sm">Join Now</a>
+                    }
+                </div>
+            </div>
+            
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Popular Destinations</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="d-flex align-items-center mb-2">
+                            <i class="fas fa-map-marker-alt text-danger me-2"></i>
+                            <a href="#" class="text-decoration-none">Bali, Indonesia</a>
+                        </li>
+                        <li class="d-flex align-items-center mb-2">
+                            <i class="fas fa-map-marker-alt text-danger me-2"></i>
+                            <a href="#" class="text-decoration-none">Paris, France</a>
+                        </li>
+                        <li class="d-flex align-items-center mb-2">
+                            <i class="fas fa-map-marker-alt text-danger me-2"></i>
+                            <a href="#" class="text-decoration-none">Tokyo, Japan</a>
+                        </li>
+                        <li class="d-flex align-items-center mb-2">
+                            <i class="fas fa-map-marker-alt text-danger me-2"></i>
+                            <a href="#" class="text-decoration-none">New York, USA</a>
+                        </li>
+                        <li class="d-flex align-items-center">
+                            <i class="fas fa-map-marker-alt text-danger me-2"></i>
+                            <a href="#" class="text-decoration-none">Santorini, Greece</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Follow Us</h5>
+                </div>
+                <div class="card-body">
+                    <div class="social-icons d-flex justify-content-between">
+                        <a href="#" class="text-decoration-none">
+                            <i class="fab fa-facebook-f fa-lg"></i>
+                        </a>
+                        <a href="#" class="text-decoration-none">
+                            <i class="fab fa-twitter fa-lg"></i>
+                        </a>
+                        <a href="#" class="text-decoration-none">
+                            <i class="fab fa-instagram fa-lg"></i>
+                        </a>
+                        <a href="#" class="text-decoration-none">
+                            <i class="fab fa-pinterest fa-lg"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<BlogPost> blogPosts = new();
+    private string searchQuery = "";
+    private string selectedFilter = "";
+    private int currentPage = 1;
+    private int totalPages = 1;
+    private int totalItems = 0;
+    private DateTime lastUpdated = DateTime.Now;
+    private const int pageSize = 10;
+    private bool isAuthenticated;
+    private string newPostTitle = "";
+    private string newPostContent = "";
+    private int userId;
+    private HashSet<int> expandedPosts = new();
+    private IBrowserFile? selectedFile;
+    private HashSet<int> expandedComments = new();
+    private string newCommentContent = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        isAuthenticated = user.Identity is not null && user.Identity.IsAuthenticated;
+
+        if (isAuthenticated)
+        {
+            var userIdClaim = user.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
+
+            if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out int parsedUserId))
+            {
+                userId = parsedUserId;
+            }
+            else
+            {
+                userId = 0;
+            }
+        }
+
+        await LoadBlogPosts();
+    }
+
+    private void TogglePostExpansion(int postId)
+    {
+        if (expandedPosts.Contains(postId))
+        {
+            expandedPosts.Remove(postId);
+        }
+        else
+        {
+            expandedPosts.Add(postId);
+        }
+    }
+
+    private async Task LoadBlogPosts()
+    {
+        try
+        {
+            string url = $"/api/blogposts?page={currentPage}&pageSize={pageSize}";
+
+            if (!string.IsNullOrWhiteSpace(searchQuery))
+            {
+                url += $"&search={searchQuery}";
+            }
+            if (!string.IsNullOrWhiteSpace(selectedFilter))
+            {
+                url += $"&orderBy={selectedFilter}";
+            }
+
+            var response = await Http.GetAsync(url);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responseData = await response.Content.ReadAsStringAsync();
+
+                var parsedData = System.Text.Json.JsonSerializer.Deserialize<PaginationResponse>(responseData, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                if (parsedData != null)
+                {
+                    blogPosts = parsedData.BlogPosts;
+                    totalPages = parsedData.TotalPages;
+                    totalItems = parsedData.TotalItems;
+                    lastUpdated = DateTime.Now;
+                }
+            }
+            else
+            {
+                Console.WriteLine($"🚨 API Error: {response.StatusCode} - {await response.Content.ReadAsStringAsync()}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Exception in LoadBlogPosts: {ex.Message}");
+        }
+    }
+
+    private async Task CreateBlogPost()
+    {
+        if (string.IsNullOrWhiteSpace(newPostTitle) || string.IsNullOrWhiteSpace(newPostContent))
+        {
+            Console.WriteLine("Title and content are required.");
+            return;
+        }
+
+        var content = new MultipartFormDataContent
+        {
+            { new StringContent(newPostTitle), "title" },
+            { new StringContent(newPostContent), "content" }
+        };
+
+        if (selectedFile != null)
+        {
+            var fileContent = new StreamContent(selectedFile.OpenReadStream(5000000));
+            content.Add(fileContent, "image", selectedFile.Name);
+        }
+
+        var response = await Http.PostAsync("/api/blogposts", content);
+        if (response.IsSuccessStatusCode)
+        {
+            newPostTitle = "";
+            newPostContent = "";
+            selectedFile = null;
+            await LoadBlogPosts();
+        }
+    }
+
+    private async Task ToggleLike(int postId)
+    {
+        if (!isAuthenticated)
+        {
+            Console.WriteLine("Please log in to like a post.");
+            return;
+        }
+
+        await AddLike(postId);  
+        await LoadBlogPosts();   
+    }
+
+    private async Task AddLike(int postID)
+    {
+        if (!isAuthenticated)
+        {
+            return;
+        }
+
+        var response = await Http.PostAsync($"/api/blogposts/{postID}/like", null);
+        if (response.IsSuccessStatusCode)
+        {
+            var jsonResponse = await response.Content.ReadAsStringAsync();
+            var likeData = JsonSerializer.Deserialize<LikeResponse>(jsonResponse, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            var post = blogPosts.FirstOrDefault(p => p.Id == postID);
+            if (post != null && likeData != null)
+            {
+                post.Likes = new List<Like>(new Like[likeData.LikeCount]); 
+            }
+        }
+    }
+
+    private async Task ToggleComments(int postId)
+    {
+        if (expandedComments.Contains(postId))
+        {
+            expandedComments.Remove(postId);
+        }
+        else
+        {
+            expandedComments.Add(postId);
+            await LoadComments(postId);
+        }
+    }
+
+    private async Task LoadComments(int postId)
+    {
+        try
+        {
+            var response = await Http.GetFromJsonAsync<List<Comment>>($"/api/blogposts/{postId}/comments");
+
+            var post = blogPosts.FirstOrDefault(p => p.Id == postId);
+            if (post != null)
+            {
+                post.Comments = response ?? new List<Comment>();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading comments: {ex.Message}");
+        }
+    }
+
+    private async Task SubmitComment(int postId)
+    {
+        if (string.IsNullOrWhiteSpace(newCommentContent))
+        {
+            Console.WriteLine("Comment cannot be empty.");
+            return;
+        }
+
+        var response = await Http.PostAsJsonAsync($"/api/blogposts/{postId}/comment", new { Content = newCommentContent });
+
+        if (response.IsSuccessStatusCode)
+        {
+            newCommentContent = "";
+            await LoadComments(postId);
+        }
+        else
+        {
+            Console.WriteLine($"Error posting comment: {response.StatusCode}");
+        }
+    }
+
+    private async Task SearchPosts()
+    {
+        currentPage = 1;
+        await LoadBlogPosts();
+    }
+
+    private async Task NextPage()
+    {
+        if (HasNextPage)
+        {
+            currentPage++;
+            await LoadBlogPosts();
+        }
+    }
+
+    private async Task PreviousPage()
+    {
+        if (HasPreviousPage)
+        {
+            currentPage--;
+            await LoadBlogPosts();
+        }
+    }
+
+    private async Task GoToPage(int page)
+    {
+        currentPage = page;
+        await LoadBlogPosts();
+    }
+
+    private async Task HandleFileChange(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+    }
+
+    private bool HasNextPage => currentPage < totalPages;
+    private bool HasPreviousPage => currentPage > 1;
+
+    private class PaginationResponse
+    {
+        public int TotalItems { get; set; }
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+        public int TotalPages { get; set; }
+        public List<BlogPost> BlogPosts { get; set; } = new();
+    }
+
+    private class LikeResponse
+    {
+        public int LikeCount { get; set; }
+    }
+}

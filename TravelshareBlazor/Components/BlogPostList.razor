@@ -1,0 +1,285 @@
+@inject BlogPostService BlogPostService
+
+<div class="blog-post-list">
+    @if (IsLoading)
+    {
+        <div class="text-center my-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3">Loading blog posts...</p>
+        </div>
+    }
+    else if (BlogPosts.Count == 0)
+    {
+        <div class="alert alert-light">
+            <i class="bi bi-journal-text me-2"></i>
+            @EmptyMessage
+        </div>
+    }
+    else
+    {
+        @if (ViewMode == "grid")
+        {
+            <div class="row g-4">
+                @foreach (var post in BlogPosts)
+                {
+                    <div class="col-md-6">
+                        <div class="card blog-card h-100 shadow-sm">
+                            @if (!string.IsNullOrEmpty(post.ImageBase64))
+                            {
+                                <img src="data:image/png;base64,@post.ImageBase64" class="card-img-top" alt="Blog Image" />
+                            }
+                            else
+                            {
+                                <div class="placeholder-image bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                    <i class="bi bi-image text-muted" style="font-size: 2rem;"></i>
+                                </div>
+                            }
+                            <div class="card-body">
+                                <h5 class="card-title">@post.Title</h5>
+                                <div class="content-container @(ExpandedPosts.Contains(post.Id) ? "expanded" : "collapsed")">
+                                    <p class="card-text">
+                                        @if (ExpandedPosts.Contains(post.Id))
+                                        {
+                                            @post.Content
+                                        }
+                                        else
+                                        {
+                                            @(post.Content.Length > 100 ? post.Content.Substring(0, 100) + "..." : post.Content)
+                                        }
+                                    </p>
+                                </div>
+                                <button class="btn btn-link p-0 text-decoration-none" @onclick="() => TogglePostExpansion(post.Id)">
+                                    @(ExpandedPosts.Contains(post.Id) ? "Show Less" : "Read More") 
+                                    <i class="bi bi-chevron-@(ExpandedPosts.Contains(post.Id) ? "up" : "down") ms-1"></i>
+                                </button>
+                            </div>
+                            <div class="card-footer bg-white">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="btn-group">
+                                        <button @onclick="async () => await OnLikeClick.InvokeAsync(post.Id)" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-heart@(post.Likes.Any(like => like.UserId == CurrentUserId) ? "-fill" : "") me-1"></i>
+                                            @post.Likes.Count
+                                        </button>
+                                        <button @onclick="() => ToggleComments(post.Id)" class="btn btn-sm btn-outline-secondary">
+                                            <i class="bi bi-chat me-1"></i>
+                                            @post.Comments.Count
+                                        </button>
+                                    </div>
+                                    <small class="text-muted">@FormatDate(post.CreatedDate)</small>
+                                </div>
+                                
+                                <!-- Comment Section -->
+                                @if (ExpandedComments.Contains(post.Id))
+                                {
+                                    <div class="comments-section mt-3">
+                                        <hr />
+                                        <h6 class="fw-bold">Comments</h6>
+                                        @if (post.Comments.Count == 0)
+                                        {
+                                            <p class="text-muted small">No comments yet.</p>
+                                        }
+                                        else
+                                        {
+                                            <ul class="list-unstyled">
+                                                @foreach (var comment in post.Comments)
+                                                {
+                                                    <li class="mb-2">
+                                                        <div class="d-flex">
+                                                            <div class="comment-avatar me-2">
+                                                                <i class="bi bi-person-circle" style="font-size: 1.5rem;"></i>
+                                                            </div>
+                                                            <div>
+                                                                <h6 class="mb-0 fs-6">@comment.UserFullName</h6>
+                                                                <p class="mb-0 small">@comment.Content</p>
+                                                            </div>
+                                                        </div>
+                                                    </li>
+                                                }
+                                            </ul>
+                                        }
+
+                                        @if (IsAuthenticated)
+                                        {
+                                            <div class="add-comment-form mt-3">
+                                                <div class="input-group">
+                                                    <input type="text" class="form-control form-control-sm" @bind="NewCommentContent" placeholder="Write a comment..." />
+                                                    <button class="btn btn-sm btn-primary" @onclick="() => SubmitComment(post.Id)">
+                                                        <i class="bi bi-send"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="list-group">
+                @foreach (var post in BlogPosts)
+                {
+                    <div class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">@post.Title</h6>
+                            <small class="text-muted">@FormatDate(post.CreatedDate)</small>
+                        </div>
+                        <p class="mb-1 text-truncate">@post.Content</p>
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <small class="text-muted">
+                                <i class="bi bi-heart@(post.Likes.Any(like => like.UserId == CurrentUserId) ? "-fill" : "") me-1"></i> @post.Likes.Count
+                                <i class="bi bi-chat ms-3 me-1"></i> @post.Comments.Count
+                            </small>
+                            <button @onclick="async () => await OnLikeClick.InvokeAsync(post.Id)" class="btn btn-sm btn-outline-primary">View Post</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        
+        @if (ShowPagination)
+        {
+            <div class="mt-4">
+                @if (PaginationMode == "loadmore" && HasMorePages)
+                {
+                    <div class="text-center">
+                        <button @onclick="LoadMorePosts" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-arrow-down me-1"></i> Load More
+                        </button>
+                    </div>
+                }
+                else if (PaginationMode == "pages")
+                {
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item @(!HasPreviousPage ? "disabled" : "")">
+                                <button class="page-link" @onclick="PreviousPage" disabled="@(!HasPreviousPage)">
+                                    <i class="bi bi-chevron-left"></i>
+                                </button>
+                            </li>
+                            @for (int i = 1; i <= TotalPages; i++)
+                            {
+                                var pageNumber = i;
+                                <li class="page-item @(pageNumber == CurrentPage ? "active" : "")">
+                                    <button class="page-link" @onclick="() => GoToPage(pageNumber)">@pageNumber</button>
+                                </li>
+                            }
+                            <li class="page-item @(!HasNextPage ? "disabled" : "")">
+                                <button class="page-link" @onclick="NextPage" disabled="@(!HasNextPage)">
+                                    <i class="bi bi-chevron-right"></i>
+                                </button>
+                            </li>
+                        </ul>
+                    </nav>
+                }
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public List<BlogPost> BlogPosts { get; set; } = new();
+    [Parameter] public bool IsLoading { get; set; }
+    [Parameter] public string ViewMode { get; set; } = "grid"; // Options: grid, list
+    [Parameter] public string PaginationMode { get; set; } = "pages"; // Options: pages, loadmore
+    [Parameter] public string EmptyMessage { get; set; } = "No blog posts found.";
+    [Parameter] public bool ShowPagination { get; set; } = true;
+    [Parameter] public int CurrentPage { get; set; } = 1;
+    [Parameter] public int TotalPages { get; set; } = 1;
+    [Parameter] public bool HasNextPage { get; set; }
+    [Parameter] public bool HasPreviousPage { get; set; }
+    [Parameter] public bool HasMorePages { get; set; }
+    [Parameter] public bool IsAuthenticated { get; set; }
+    [Parameter] public int CurrentUserId { get; set; }
+    [Parameter] public EventCallback<int> OnViewPostClick { get; set; }
+    [Parameter] public EventCallback<int> OnLikeClick { get; set; }
+    [Parameter] public EventCallback<int> OnCommentClick { get; set; }
+    [Parameter] public EventCallback<(int, string)> OnCommentSubmit { get; set; }
+    [Parameter] public EventCallback OnLoadMore { get; set; }
+    [Parameter] public EventCallback<int> OnPageChange { get; set; }
+
+    private HashSet<int> ExpandedPosts = new();
+    private HashSet<int> ExpandedComments = new();
+    private string NewCommentContent = "";
+
+    private void TogglePostExpansion(int postId)
+    {
+        if (ExpandedPosts.Contains(postId))
+        {
+            ExpandedPosts.Remove(postId);
+        }
+        else
+        {
+            ExpandedPosts.Add(postId);
+        }
+    }
+
+    private async Task ToggleComments(int postId)
+    {
+        if (ExpandedComments.Contains(postId))
+        {
+            ExpandedComments.Remove(postId);
+        }
+        else
+        {
+            ExpandedComments.Add(postId);
+            await OnCommentClick.InvokeAsync(postId);
+        }
+    }
+
+    private async Task SubmitComment(int postId)
+    {
+        if (string.IsNullOrWhiteSpace(NewCommentContent))
+        {
+            return;
+        }
+
+        await OnCommentSubmit.InvokeAsync((postId, NewCommentContent));
+        NewCommentContent = "";
+    }
+
+    private async Task LoadMorePosts()
+    {
+        await OnLoadMore.InvokeAsync();
+    }
+
+    private async Task NextPage()
+    {
+        if (HasNextPage)
+        {
+            await OnPageChange.InvokeAsync(CurrentPage + 1);
+        }
+    }
+
+    private async Task PreviousPage()
+    {
+        if (HasPreviousPage)
+        {
+            await OnPageChange.InvokeAsync(CurrentPage - 1);
+        }
+    }
+
+    private async Task GoToPage(int page)
+    {
+        await OnPageChange.InvokeAsync(page);
+    }
+
+    private string FormatDate(DateTime date)
+    {
+        var timeDiff = DateTime.Now - date;
+        
+        if (timeDiff.TotalDays < 1)
+            return "Today";
+        else if (timeDiff.TotalDays < 2)
+            return "Yesterday";
+        else if (timeDiff.TotalDays < 7)
+            return $"{(int)timeDiff.TotalDays} days ago";
+        else
+            return date.ToString("MMM d, yyyy");
+    }
+}

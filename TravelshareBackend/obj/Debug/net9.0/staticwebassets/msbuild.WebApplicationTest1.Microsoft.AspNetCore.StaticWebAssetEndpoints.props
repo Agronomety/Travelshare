@@ -1,0 +1,16 @@
+﻿<Project>
+  <ItemGroup>
+    <StaticWebAssetEndpoint Include="_content/TravelshareBackend/uploads/52-1.jpeg">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\uploads\52-1.jpeg'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-YSWaZYdtlVDN2oJ5xLVNqf05Ibog8Sq3KaLOkPpWHi0="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=3600, must-revalidate"},{"Name":"Content-Length","Value":"537100"},{"Name":"Content-Type","Value":"image/jpeg"},{"Name":"ETag","Value":"\u0022YSWaZYdtlVDN2oJ5xLVNqf05Ibog8Sq3KaLOkPpWHi0=\u0022"},{"Name":"Last-Modified","Value":"Sun, 09 Mar 2025 12:35:56 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/TravelshareBackend/uploads/52-1.nmv6hp0loo.jpeg">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\uploads\52-1.jpeg'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"nmv6hp0loo"},{"Name":"integrity","Value":"sha256-YSWaZYdtlVDN2oJ5xLVNqf05Ibog8Sq3KaLOkPpWHi0="},{"Name":"label","Value":"_content/TravelshareBackend/uploads/52-1.jpeg"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"537100"},{"Name":"Content-Type","Value":"image/jpeg"},{"Name":"ETag","Value":"\u0022YSWaZYdtlVDN2oJ5xLVNqf05Ibog8Sq3KaLOkPpWHi0=\u0022"},{"Name":"Last-Modified","Value":"Sun, 09 Mar 2025 12:35:56 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+  </ItemGroup>
+</Project>
