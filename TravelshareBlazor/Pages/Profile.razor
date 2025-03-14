@@ -71,6 +71,59 @@
                         {
                             <div class="alert alert-danger mt-3">@errorMessage</div>
                         }
+                        
+                        <!-- User's Blog Posts Section -->
+                        <div class="mt-5">
+                            <h5 class="mb-3">My Blog Posts</h5>
+                            
+                            @if (isLoadingPosts)
+                            {
+                                <div class="text-center my-4">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            }
+                            else if (userPosts.Count == 0)
+                            {
+                                <div class="alert alert-light">
+                                    <i class="bi bi-journal-text me-2"></i>
+                                    You haven't created any blog posts yet.
+                                    <a href="/blogposts" class="alert-link ms-2">Create your first post</a>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="list-group">
+                                    @foreach (var post in userPosts)
+                                    {
+                                        <div class="list-group-item list-group-item-action">
+                                            <div class="d-flex w-100 justify-content-between">
+                                                <h6 class="mb-1">@post.Title</h6>
+                                                <small class="text-muted">@FormatDate(post.CreatedAt)</small>
+                                            </div>
+                                            <p class="mb-1 text-truncate">@post.Content</p>
+                                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                                <small class="text-muted">
+                                                    <i class="bi bi-heart me-1"></i> @post.Likes.Count
+                                                    <i class="bi bi-chat ms-3 me-1"></i> @post.Comments.Count
+                                                </small>
+                                                <a href="/blogposts" class="btn btn-sm btn-outline-primary">View Post</a>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                                
+                                @if (hasMorePosts)
+                                {
+                                    <div class="text-center mt-3">
+                                        <button @onclick="LoadMorePosts" class="btn btn-outline-secondary btn-sm">
+                                            <i class="bi bi-arrow-down me-1"></i> Load More
+                                        </button>
+                                    </div>
+                                }
+                            }
+                        </div>
                     }
                     else
                     {
@@ -93,6 +146,13 @@
     private bool isInitialized;
     private bool isLoading;
     private string errorMessage;
+    
+    // Blog posts related properties
+    private List<BlogPost> userPosts = new();
+    private bool isLoadingPosts;
+    private bool hasMorePosts;
+    private int currentPage = 1;
+    private const int pageSize = 5;
 
     protected override async Task OnInitializedAsync()
     {
@@ -103,6 +163,7 @@
             return;
         }
         await LoadProfileData();
+        await LoadUserPosts();
     }
 
     private async Task LoadProfileData()
@@ -163,6 +224,76 @@
         }
     }
 
+    private async Task LoadUserPosts(bool resetList = true)
+    {
+        try
+        {
+            isLoadingPosts = true;
+            
+            if (resetList)
+            {
+                currentPage = 1;
+                userPosts.Clear();
+            }
+
+            var token = await AuthService.GetAuthToken();
+            if (string.IsNullOrEmpty(token))
+            {
+                return;
+            }
+
+            var request = new HttpRequestMessage(HttpMethod.Get, $"/api/user/posts?page={currentPage}&pageSize={pageSize}");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var response = await Http.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responseData = await response.Content.ReadAsStringAsync();
+                var parsedData = System.Text.Json.JsonSerializer.Deserialize<PaginationResponse>(responseData, 
+                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                if (parsedData != null)
+                {
+                    userPosts.AddRange(parsedData.BlogPosts);
+                    hasMorePosts = currentPage < parsedData.TotalPages;
+                }
+            }
+            else
+            {
+                Console.WriteLine($"Error loading user posts: {response.StatusCode}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exception loading user posts: {ex.Message}");
+        }
+        finally
+        {
+            isLoadingPosts = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadMorePosts()
+    {
+        currentPage++;
+        await LoadUserPosts(false);
+    }
+
+    private string FormatDate(DateTime date)
+    {
+        var timeDiff = DateTime.Now - date;
+        
+        if (timeDiff.TotalDays < 1)
+            return "Today";
+        else if (timeDiff.TotalDays < 2)
+            return "Yesterday";
+        else if (timeDiff.TotalDays < 7)
+            return $"{(int)timeDiff.TotalDays} days ago";
+        else
+            return date.ToString("MMM d, yyyy");
+    }
+
     private void EditProfile() => Navigation.NavigateTo("/profile/edit");
 
     private async Task LogOut()
@@ -183,5 +314,38 @@
         public int PostCount { get; set; }
         public int CommentsCount { get; set; }
         public int LikesCount { get; set; }
+    }
+    
+    private class BlogPost
+    {
+        public int Id { get; set; }
+        public string Title { get; set; }
+        public string Content { get; set; }
+        public string ImageBase64 { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public List<Like> Likes { get; set; } = new();
+        public List<Comment> Comments { get; set; } = new();
+    }
+    
+    private class Like
+    {
+        public int Id { get; set; }
+        public int UserId { get; set; }
+    }
+    
+    private class Comment
+    {
+        public int Id { get; set; }
+        public string Content { get; set; }
+        public string UserFullName { get; set; }
+    }
+    
+    private class PaginationResponse
+    {
+        public int TotalItems { get; set; }
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+        public int TotalPages { get; set; }
+        public List<BlogPost> BlogPosts { get; set; } = new();
     }
 }
