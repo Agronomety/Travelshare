@@ -4,8 +4,7 @@
 @inject AuthService AuthService
 @inject NavigationManager Navigation
 @using TravelshareBlazor.Models
-
-
+@using TravelshareBlazor.Components
 
 <div class="proflie-container">
     <div class="row">
@@ -37,7 +36,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="profile-stats mt-4">
                             <h5 class="mb-3">Your Activity</h5>
                             <div class="row text-center">
@@ -61,27 +59,16 @@
                                 </div>
                             </div>
                         </div>
-
-                        @if (isLoading)
-                        {
-                            <div class="text-center my-4">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                            </div>
-                        }
-                        else if (errorMessage != null)
-                        {
-                            <div class="alert alert-danger mt-3">@errorMessage</div>
-                        }
-                        
-                        <!-- User's Blog Posts Section -->
                         <div class="mt-5">
-                            <h5 class="mb-3">My Blog Posts</h5>
-                            
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0">My Blog Posts</h5>
+                                <a href="/create-post" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-plus-circle me-1"></i> New Post
+                                </a>
+                            </div>
                             @if (isLoadingPosts)
                             {
-                                <div class="text-center my-4">
+                                <div class="text-center my-5">
                                     <div class="spinner-border text-primary" role="status">
                                         <span class="visually-hidden">Loading...</span>
                                     </div>
@@ -89,46 +76,41 @@
                             }
                             else if (userPosts.Count == 0)
                             {
-                                <div class="alert alert-light">
-                                    <i class="bi bi-journal-text me-2"></i>
-                                    You haven't created any blog posts yet.
-                                    <a href="/blogposts" class="alert-link ms-2">Create your first post</a>
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle me-2"></i> You haven't created any blog posts yet.
+                                    <a href="/create-post" class="alert-link ms-2">Create your first post</a>
                                 </div>
                             }
                             else
                             {
-                                <div class="list-group">
+                                <div class="row g-4">
                                     @foreach (var post in userPosts)
                                     {
-                                        <div class="list-group-item list-group-item-action">
-                                            <div class="d-flex w-100 justify-content-between">
-                                                <h6 class="mb-1">@post.Title</h6>
-                                                <small class="text-muted">@FormatDate(post.CreatedAt)</small>
-                                            </div>
-                                            <p class="mb-1 text-truncate">@post.Content</p>
-                                            <div class="d-flex justify-content-between align-items-center mt-2">
-                                                <small class="text-muted">
-                                                    <i class="bi bi-heart me-1"></i> @post.Likes.Count
-                                                    <i class="bi bi-chat ms-3 me-1"></i> @post.Comments.Count
-                                                </small>
-                                                <a href="/blogposts" class="btn btn-sm btn-outline-primary">View Post</a>
-                                            </div>
+                                        <div class="col-md-6 col-lg-4 mb-4">
+                                            <BlogPostCard Post="post" OnOpenModal="OpenPostModal" />
                                         </div>
                                     }
                                 </div>
-                                
                                 @if (hasMorePosts)
                                 {
-                                    <div class="text-center mt-3">
-                                        <button @onclick="LoadMorePosts" class="btn btn-outline-secondary btn-sm">
-                                            <i class="bi bi-arrow-down me-1"></i> Load More
+                                    <div class="text-center mt-4">
+                                        <button @onclick="LoadMorePosts" class="btn btn-outline-primary" disabled="@isLoadingPosts">
+                                            @if (isLoadingPosts)
+                                            {
+                                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                <span>Loading...</span>
+                                            }
+                                            else
+                                            {
+                                                <span>Load More</span>
+                                            }
                                         </button>
                                     </div>
                                 }
                             }
                         </div>
                     }
-                    else
+                    else if (isLoading)
                     {
                         <div class="text-center py-5">
                             <div class="spinner-border text-primary" role="status">
@@ -137,11 +119,17 @@
                             <p class="mt-3">Loading your profile information...</p>
                         </div>
                     }
+                    else if (errorMessage != null)
+                    {
+                        <div class="alert alert-danger">@errorMessage</div>
+                    }
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<BlogPostModal @ref="blogPostModal" BlogPost="selectedPost" OnClose="ClosePostModal" />
 
 @code {
     private User user;
@@ -149,13 +137,13 @@
     private bool isInitialized;
     private bool isLoading;
     private string errorMessage;
-    
-    // Blog posts related properties
     private List<BlogPost> userPosts = new();
     private bool isLoadingPosts;
     private bool hasMorePosts;
     private int currentPage = 1;
-    private const int pageSize = 5;
+    private const int pageSize = 6;
+    private BlogPostModal blogPostModal;
+    private BlogPost selectedPost;
 
     protected override async Task OnInitializedAsync()
     {
@@ -166,7 +154,7 @@
             return;
         }
         await LoadProfileData();
-        await LoadUserPosts();
+        await LoadUserPosts(true);
     }
 
     private async Task LoadProfileData()
@@ -175,7 +163,6 @@
         {
             isLoading = true;
             errorMessage = null;
-
             var token = await AuthService.GetAuthToken();
             if (string.IsNullOrEmpty(token))
             {
@@ -183,18 +170,15 @@
                 Navigation.NavigateTo("/login");
                 return;
             }
-
             var profileRequest = new HttpRequestMessage(HttpMethod.Get, "/api/user/profile");
             profileRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
             var profileResponse = await Http.SendAsync(profileRequest);
-
             if (profileResponse.IsSuccessStatusCode)
             {
                 user = await profileResponse.Content.ReadFromJsonAsync<User>();
                 var statsRequest = new HttpRequestMessage(HttpMethod.Get, "/api/user/stats");
                 statsRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
                 var statsResponse = await Http.SendAsync(statsRequest);
-
                 if (statsResponse.IsSuccessStatusCode)
                 {
                     userStats = await statsResponse.Content.ReadFromJsonAsync<UserStats>();
@@ -232,35 +216,29 @@
         try
         {
             isLoadingPosts = true;
-            
             if (resetList)
             {
                 currentPage = 1;
                 userPosts.Clear();
             }
-
             var token = await AuthService.GetAuthToken();
             if (string.IsNullOrEmpty(token))
             {
+                Navigation.NavigateTo("/login");
                 return;
             }
-
             if (user == null || user.Id == 0)
             {
                 Console.WriteLine("User ID not available");
                 return;
             }
-
-            var request = new HttpRequestMessage(HttpMethod.Get, 
-                $"/api/user/posts?userId={user.Id}&page={currentPage}&pageSize={pageSize}");
-            
+            var request = new HttpRequestMessage(HttpMethod.Get, $"/api/user/posts?userId={user.Id}&page={currentPage}&pageSize={pageSize}");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
             var response = await Http.SendAsync(request);
-
             if (response.IsSuccessStatusCode)
             {
                 var responseData = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"Success response: {responseData}");
+                Console.WriteLine($"API Response: {responseData.Substring(0, Math.Min(100, responseData.Length))}...");
                 
                 var parsedData = System.Text.Json.JsonSerializer.Deserialize<PaginationResponse>(responseData, 
                     new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
@@ -268,6 +246,11 @@
                 if (parsedData != null)
                 {
                     userPosts.AddRange(parsedData.BlogPosts);
+                    // Check if images are present
+                    foreach (var post in parsedData.BlogPosts)
+                    {
+                        Console.WriteLine($"Post {post.Id}: Title: {post.Title}, Has Image: {!string.IsNullOrEmpty(post.ImageBase64)}");
+                    }
                     hasMorePosts = currentPage < parsedData.TotalPages;
                 }
             }
@@ -277,6 +260,7 @@
                 Console.WriteLine($"Error loading user posts: {response.StatusCode}. Details: {errorContent}");
                 errorMessage = "Failed to load your blog posts.";
             }
+            
         }
         catch (Exception ex)
         {
@@ -296,20 +280,6 @@
         await LoadUserPosts(false);
     }
 
-    private string FormatDate(DateTime date)
-    {
-        var timeDiff = DateTime.Now - date;
-        
-        if (timeDiff.TotalDays < 1)
-            return "Today";
-        else if (timeDiff.TotalDays < 2)
-            return "Yesterday";
-        else if (timeDiff.TotalDays < 7)
-            return $"{(int)timeDiff.TotalDays} days ago";
-        else
-            return date.ToString("MMM d, yyyy");
-    }
-
     private void EditProfile() => Navigation.NavigateTo("/profile/edit");
 
     private async Task LogOut()
@@ -318,7 +288,16 @@
         Navigation.NavigateTo("/");
     }
 
+    private void OpenPostModal(BlogPost post)
+    {
+        selectedPost = post;
+        blogPostModal.Show();
+    }
 
+    private void ClosePostModal()
+    {
+        blogPostModal.Hide();
+    }
 
     private class UserStats
     {
@@ -326,31 +305,7 @@
         public int CommentsCount { get; set; }
         public int LikesCount { get; set; }
     }
-    
-    private class BlogPost
-    {
-        public int Id { get; set; }
-        public string Title { get; set; }
-        public string Content { get; set; }
-        public string ImageBase64 { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public List<Like> Likes { get; set; } = new();
-        public List<Comment> Comments { get; set; } = new();
-    }
-    
-    private class Like
-    {
-        public int Id { get; set; }
-        public int UserId { get; set; }
-    }
-    
-    private class Comment
-    {
-        public int Id { get; set; }
-        public string Content { get; set; }
-        public string UserFullName { get; set; }
-    }
-    
+
     private class PaginationResponse
     {
         public int TotalItems { get; set; }
@@ -360,3 +315,14 @@
         public List<BlogPost> BlogPosts { get; set; } = new();
     }
 }
+
+<style>
+    .proflie-container {
+        padding: 2rem 1rem;
+    }
+
+    .section-title {
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+</style>

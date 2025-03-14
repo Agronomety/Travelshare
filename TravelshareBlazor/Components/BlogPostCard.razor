@@ -1,0 +1,63 @@
+@namespace TravelshareBlazor.Components
+@using TravelshareBlazor.Models
+@using System.Text
+
+<div class="card h-100 blog-card shadow-sm">
+    @if (!string.IsNullOrEmpty(Post.ImageBase64))
+    {
+        <img src="data:image/png;base64,@Post.ImageBase64" class="card-img-top" alt="Blog Image" />
+    }
+    else
+    {
+        <div class="placeholder-image bg-light d-flex align-items-center justify-content-center" style="height: 160px;">
+            <i class="fas fa-image text-muted fa-2x"></i>
+        </div>
+    }
+
+    <div class="card-body">
+        <h5 class="card-title">@Post.Title</h5>
+        <p class="card-text">
+            @(Post.Content != null && Post.Content.Length > 100 ? Post.Content.Substring(0, 100) + "..." : Post.Content)
+        </p>
+    </div>
+    <div class="card-footer bg-white border-top-0">
+        <div class="d-flex justify-content-between align-items-center">
+            <small class="text-muted">@FormatDate(Post.CreatedDate)</small>
+            <button @onclick="() => OnOpenModal.InvokeAsync(Post)" class="btn btn-sm btn-outline-primary">Read More</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public BlogPost Post { get; set; }
+
+    [Parameter]
+    public EventCallback<BlogPost> OnOpenModal { get; set; }
+
+    private string FormatDate(DateTime date)
+    {
+        var timeDiff = DateTime.Now - date;
+
+        if (timeDiff.TotalDays < 1) return "Today";
+        if (timeDiff.TotalDays < 2) return "Yesterday";
+        if (timeDiff.TotalDays < 7) return $"{(int)timeDiff.TotalDays} days ago";
+
+        return date.ToString("MMM d, yyyy");
+    }
+}
+
+<style>
+    .blog-card {
+        transition: transform 0.3s ease;
+    }
+
+    .blog-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .card-img-top {
+        height: 160px;
+        object-fit: cover;
+    }
+</style>

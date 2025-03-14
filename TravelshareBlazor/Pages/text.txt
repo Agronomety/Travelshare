@@ -1,0 +1,68 @@
+private async Task LoadUserPosts(bool resetList = true)
+    {
+
+            if (user == null)
+            {
+                Console.WriteLine("User is null, cannot load posts");
+                return;
+            }
+        try
+        {
+            isLoadingPosts = true;
+            
+            if (resetList)
+            {
+                currentPage = 1;
+                userPosts.Clear();
+            }
+
+            var token = await AuthService.GetAuthToken();
+            if (string.IsNullOrEmpty(token))
+            {
+                return;
+            }
+
+            if (user == null || user.Id == 0)
+            {
+                Console.WriteLine("User ID not available");
+                return;
+            }
+
+            var request = new HttpRequestMessage(HttpMethod.Get, 
+                $"/api/user/posts?userId={user.Id}&page={currentPage}&pageSize={pageSize}");
+            
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var response = await Http.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responseData = await response.Content.ReadAsStringAsync();
+                
+                
+                var parsedData = System.Text.Json.JsonSerializer.Deserialize<PaginationResponse>(responseData, 
+                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                if (parsedData != null)
+                {
+                    userPosts.AddRange(parsedData.BlogPosts);
+                    hasMorePosts = currentPage < parsedData.TotalPages;
+                }
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Error loading user posts: {response.StatusCode}. Details: {errorContent}");
+                errorMessage = "Failed to load your blog posts.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exception loading user posts: {ex.Message}");
+            errorMessage = "An error occurred while loading your posts.";
+        }
+        finally
+        {
+            isLoadingPosts = false;
+            StateHasChanged();
+        }
+    }
