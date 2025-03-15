@@ -15,14 +15,12 @@ builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>();
 builder.Services.AddScoped<AuthService>();
 
-// IMPORTANT: Register HttpClient BEFORE building the app
 builder.Services.AddScoped(sp => 
 {
-    // Get environment before building app
-    var isDevelopment = builder.Environment.IsDevelopment();
-    var apiUrl = isDevelopment 
+    
+    var apiUrl = builder.Environment.IsDevelopment()
         ? (builder.Configuration["ApiUrl"] ?? "https://localhost:7091/")
-        : "/";
+        : "https://travelshare-h8f5.onrender.com/"; 
     return new HttpClient { BaseAddress = new Uri(apiUrl) };
 });
 
