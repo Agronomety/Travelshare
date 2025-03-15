@@ -184,7 +184,17 @@ namespace TravelshareBackend.API
                     PageSize = pageSize,
                     TotalItems = totalItems,
                     TotalPages = totalPages,
-                    BlogPosts = userPosts
+                    BlogPosts = userPosts.Select(post => new
+                    {
+                        post.Id,
+                        post.Title,
+                        post.Content,
+                        post.CreatedDate,
+                        post.UserId,
+                        ImageBase64 = post.Image != null ? Convert.ToBase64String(post.Image) : null,
+                        post.Likes,
+                        post.Comments
+                    })
                 };
 
                 return Results.Ok(response);

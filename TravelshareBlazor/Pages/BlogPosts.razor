@@ -409,20 +409,40 @@
     {
         if (!isAuthenticated)
         {
+            Console.WriteLine("You are not logged in.");
             return;
         }
 
-        var response = await Http.PostAsync($"/api/blogposts/{postID}/like", null);
-        if (response.IsSuccessStatusCode)
-        {
-            var jsonResponse = await response.Content.ReadAsStringAsync();
-            var likeData = JsonSerializer.Deserialize<LikeResponse>(jsonResponse, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-            var post = blogPosts.FirstOrDefault(p => p.Id == postID);
-            if (post != null && likeData != null)
+        try {
+            var response = await Http.PostAsync($"/api/blogposts/{postID}/like", null);
+            if (response.IsSuccessStatusCode)
             {
-                post.Likes = new List<Like>(new Like[likeData.LikeCount]); 
+                var jsonResponse = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Like response: {jsonResponse}");
+                var likeData = JsonSerializer.Deserialize<LikeResponse>(jsonResponse, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                var post = blogPosts.FirstOrDefault(p => p.Id == postID);
+                if (post != null && likeData != null)
+                {
+                    // Check if the current user has liked this post
+                    bool userHasLiked = post.Likes.Any(like => like.UserId == userId);
+                    
+                    // Update the like data without reloading everything
+                    if (userHasLiked) {
+                        // Remove the user's like
+                        var likesList = post.Likes.ToList();
+                        likesList.RemoveAll(like => like.UserId == userId);
+                        post.Likes = likesList;
+                    } else {
+                        // Add the user's like
+                        post.Likes.Add(new Like { UserId = userId });
+                    }
+                    
+                    StateHasChanged();
+                }
             }
+        } catch (Exception ex) {
+            Console.WriteLine($"Exception in AddLike: {ex.Message}");
         }
     }
 
