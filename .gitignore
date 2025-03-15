@@ -1,3 +1,7 @@
 # Ignore build and debug files
 bin/
 obj/
+**/out/
+**/.vs/
+**/.vscode/
+**/.idea/

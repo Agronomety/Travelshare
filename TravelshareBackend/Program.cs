@@ -13,6 +13,7 @@ using TravelshareBackend.API;
 
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Configuration.AddEnvironmentVariables();
 
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"];
@@ -55,9 +56,12 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAllOrigins",
         builder =>
         {
-            builder.AllowAnyOrigin()
-                   .AllowAnyMethod()
-                   .AllowAnyHeader();
+            builder.WithOrigins(
+                    "https://your-render-app-url.onrender.com", 
+                    "http://localhost:5091"
+                )
+                .AllowAnyMethod()
+                .AllowAnyHeader();
         });
 });
 
