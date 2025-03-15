@@ -1,0 +1,9 @@
+services:
+  - name: TravelshareBackend
+    type: web
+    rootDir: TravelshareBackend
+    runtime: dotnet
+    buildCommand: dotnet publish -c Release -o out
+    startCommand: dotnet out/TravelshareBackend.dll
+    region: frankfurt
+    plan: free
