@@ -15,22 +15,23 @@ builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>();
 builder.Services.AddScoped<AuthService>();
 
+// IMPORTANT: Register HttpClient BEFORE building the app
+builder.Services.AddScoped(sp => 
+{
+    // Get environment before building app
+    var isDevelopment = builder.Environment.IsDevelopment();
+    var apiUrl = isDevelopment 
+        ? (builder.Configuration["ApiUrl"] ?? "https://localhost:7091/")
+        : "/";
+    return new HttpClient { BaseAddress = new Uri(apiUrl) };
+});
 
 builder.Services.AddScoped<BlogPostService>();
+
 
 var app = builder.Build();
 
 
-builder.Services.AddScoped(sp => 
-{
-    // In production, use "/" as base address and localhost if in development
-    var apiUrl = app.Environment.IsProduction() 
-        ? "/" 
-        : (builder.Configuration["ApiUrl"] ?? "https://localhost:7091/");
-    return new HttpClient { BaseAddress = new Uri(apiUrl) };
-});
-
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
