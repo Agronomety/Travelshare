@@ -57,7 +57,7 @@ builder.Services.AddCors(options =>
         builder =>
         {
             builder.WithOrigins(
-                    "https://your-render-app-url.onrender.com", 
+                    "https://travelshare-h8f5.onrender.com", 
                     "http://localhost:5091"
                 )
                 .AllowAnyMethod()
