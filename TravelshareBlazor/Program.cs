@@ -20,8 +20,8 @@ builder.Services.AddScoped(sp =>
 {
     
     var apiUrl = builder.Environment.IsDevelopment()
-        ? (builder.Configuration["ApiUrl"] ?? "https://localhost:7091/")
-        : "https://travelshare-h8f5.onrender.com/"; 
+        ? (builder.Configuration["ApiUrl"] ?? "https://localhost:7091")
+        : "https://travelshare-h8f5.onrender.com"; 
     return new HttpClient { BaseAddress = new Uri(apiUrl) };
 });
 
