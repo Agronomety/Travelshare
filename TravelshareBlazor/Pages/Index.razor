@@ -198,13 +198,17 @@
         try
         {
             isLoading = true;
-            // Here we're getting featured/popular posts from the API
-            // You can modify this to filter by a "featured" flag if your API supports it
+
+            Console.WriteLine($"Requesting URL: {Http.BaseAddress}/api/blogposts?page=1&pageSize=5&orderBy=likes");
             var response = await Http.GetAsync("/api/blogposts?page=1&pageSize=5&orderBy=likes");
+            Console.WriteLine($"Response status code: {response.StatusCode}");
+
+            var responseData = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"Response content (first 200 chars): {responseData.Substring(0, Math.Min(responseData.Length, 200))}");
 
             if (response.IsSuccessStatusCode)
             {
-                var responseData = await response.Content.ReadAsStringAsync();
+                
                 var parsedData = System.Text.Json.JsonSerializer.Deserialize<PaginationResponse>(responseData,
                     new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
