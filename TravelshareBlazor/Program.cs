@@ -5,6 +5,7 @@ using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Authorization;
 
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddEnvironmentVariables();
@@ -45,6 +46,8 @@ if (app.Environment.IsProduction())
 //app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
+
+
 
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
