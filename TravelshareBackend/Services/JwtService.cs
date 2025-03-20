@@ -22,7 +22,7 @@ public class JwtService
         {
             new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
             new Claim(JwtRegisteredClaimNames.UniqueName, fullName),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()) // Unique ID for the token
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()) 
         };
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey));
@@ -32,7 +32,7 @@ public class JwtService
             issuer: _issuer,
             audience: _audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddHours(1), // Token expiration time
+            expires: DateTime.UtcNow.AddHours(1), 
             signingCredentials: creds);
 
         return new JwtSecurityTokenHandler().WriteToken(token);

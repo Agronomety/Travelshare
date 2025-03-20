@@ -33,9 +33,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AddAuthorization(); // Add authorization services
+builder.Services.AddAuthorization(); 
 
-// Register JwtService
+
 builder.Services.AddSingleton<JwtService>();
 
 
@@ -81,7 +81,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-//app.UseHttpsRedirection();
 
 
 app.MapBlogPostEndpoints();

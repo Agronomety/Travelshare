@@ -15,7 +15,7 @@ namespace TravelshareBackend.API
 
         public static void MapCommentEndpoints(this IEndpointRouteBuilder app)
         {   
-            // GET: /api/blogposts/{postId}/comments
+            
             app.MapGet("/api/blogposts/{postId}/comments", async (int postId, AppDbContext db) =>
             {
                 var comments = await db.Comments
@@ -30,7 +30,7 @@ namespace TravelshareBackend.API
                         UserFullName = db.Users
                             .Where(u => u.Id == c.UserId)
                             .Select(u => u.FirstName + " " + u.LastName)
-                            .FirstOrDefault() ?? "Unknown User" // Fallback value
+                            .FirstOrDefault() ?? "Unknown User" 
                     })
                     .ToListAsync();
 
@@ -39,7 +39,7 @@ namespace TravelshareBackend.API
 
 
 
-            // POST: /api/blogposts/{postId}/comment
+            
             app.MapPost("/api/blogposts/{postId}/comment", async (int postId, Comment comment, AppDbContext db, HttpContext httpContext) =>
             {
                 var userId = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

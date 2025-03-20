@@ -40,7 +40,7 @@ public class BlogPostService
 
             HttpRequestMessage httpRequest = new HttpRequestMessage(HttpMethod.Get, url);
             
-            // Add authorization if needed
+            
             var token = await _authService.GetAuthToken();
             if (!string.IsNullOrEmpty(token))
             {

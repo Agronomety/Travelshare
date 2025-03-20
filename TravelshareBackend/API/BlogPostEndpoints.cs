@@ -119,13 +119,13 @@ namespace TravelshareBackend.API
                 var existingLike = post.Likes.FirstOrDefault(l => l.UserId == userIdInt);
                 if (existingLike != null)
                 {
-                    // Unlike: Remove the like
+                    
                     post.Likes.Remove(existingLike);
 
                 }
                 else
                 {
-                    // Like: Add a new like
+                    
                     post.Likes.Add(new Like { UserId = userIdInt });
                 }
 

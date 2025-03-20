@@ -246,7 +246,7 @@
                 if (parsedData != null)
                 {
                     userPosts.AddRange(parsedData.BlogPosts);
-                    // Check if images are present
+                    
                     foreach (var post in parsedData.BlogPosts)
                     {
                         Console.WriteLine($"Post {post.Id}: Title: {post.Title}, Has Image: {!string.IsNullOrEmpty(post.ImageBase64)}");

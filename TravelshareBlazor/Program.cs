@@ -43,7 +43,7 @@ if (app.Environment.IsProduction())
     app.Urls.Add($"http://0.0.0.0:{port}");
 }
 
-//app.UseHttpsRedirection();
+
 app.UseStaticFiles();
 app.UseRouting();
 
