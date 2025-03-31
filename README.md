@@ -10,8 +10,8 @@ Travelshare is a web service built with C# using the .NET framework, complemente
 ## Getting Started
 Travelshare is hosted on [Render.com](https://render.com) and may require a cold start due to the free-tier hosting limitations. Follow these steps to get started:
 
-1. Open the backend server URL: [https://travelshare-zk2c.onrender.com](https://travelshare-zk2c.onrender.com).  
-   Allow up to 1 minute for the server to initialize if it is inactive.
+1. In a new window open the backend server URL: [https://travelshare-zk2c.onrender.com](https://travelshare-zk2c.onrender.com).  
+   Allow up to 0.5 - 1 minute for the server to initialize if it is inactive before closing the window.
 2. Once the server is running, visit the main website: [https://thetravelshareexperience.onrender.com](https://thetravelshareexperience.onrender.com).  
    The initial page load may take a few seconds due to the hosting environment.
 
