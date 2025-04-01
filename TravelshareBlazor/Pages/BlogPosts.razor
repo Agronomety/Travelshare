@@ -3,6 +3,10 @@
 @using System.Text.Json
 @inject HttpClient Http
 @inject AuthenticationStateProvider AuthStateProvider
+@inject AuthService AuthService
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+
+
 
 <div class="blog-header py-5 text-center" style="background-image: url('/images/backgroundImages/tropic2.jpg'); background-size: cover; background-position: center;">
     <div class="container">
@@ -373,6 +377,13 @@
             return;
         }
 
+        var isLoggedIn = await AuthService.IsLoggedIn();
+        if (!isLoggedIn)
+        {
+            Console.WriteLine("User is not logged in. Cannot create blog post.");
+            return;
+        }
+
         Console.WriteLine("Creating blog post with title: " + newPostTitle);
         
         var content = new MultipartFormDataContent
@@ -396,8 +407,24 @@
             }
         }
 
+        var token = await AuthService.GetAuthToken();
+        
+        var request = new HttpRequestMessage(HttpMethod.Post, "/api/blogposts");
+        request.Content = content;
+        
+        if (!string.IsNullOrEmpty(token))
+        {
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            Console.WriteLine("Added authorization token to request");
+        }
+        else
+        {
+            Console.WriteLine("No authentication token found");
+            return;
+        }
+
         Console.WriteLine("Sending POST request to create blog post...");
-        var response = await Http.PostAsync("/api/blogposts", content);
+        var response = await Http.SendAsync(request);
         
         Console.WriteLine($"Response received: {response.StatusCode}");
         
