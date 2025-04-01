@@ -60,6 +60,7 @@ builder.Services.AddCors(options =>
                     "https://thetravelshareexperience.onrender.com",
                     "https://travelshare-h8f5.onrender.com",
                     "https://travelshare-h8f5.onrender.com", 
+                    "https://travelshare-zk2c.onrender.com",
                     "http://localhost:5091"
                 )
                 .AllowAnyMethod()

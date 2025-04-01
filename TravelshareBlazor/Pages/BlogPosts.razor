@@ -364,6 +364,8 @@
     }
 
     private async Task CreateBlogPost()
+{
+    try
     {
         if (string.IsNullOrWhiteSpace(newPostTitle) || string.IsNullOrWhiteSpace(newPostContent))
         {
@@ -371,6 +373,8 @@
             return;
         }
 
+        Console.WriteLine("Creating blog post with title: " + newPostTitle);
+        
         var content = new MultipartFormDataContent
         {
             { new StringContent(newPostTitle), "title" },
@@ -379,19 +383,44 @@
 
         if (selectedFile != null)
         {
-            var fileContent = new StreamContent(selectedFile.OpenReadStream(5000000));
-            content.Add(fileContent, "image", selectedFile.Name);
+            Console.WriteLine($"Adding file: {selectedFile.Name} ({selectedFile.Size} bytes)");
+            try
+            {
+                var fileContent = new StreamContent(selectedFile.OpenReadStream(5000000));
+                content.Add(fileContent, "image", selectedFile.Name);
+            }
+            catch (Exception fileEx)
+            {
+                Console.WriteLine($"Error processing file: {fileEx.Message}");
+                return;
+            }
         }
 
+        Console.WriteLine("Sending POST request to create blog post...");
         var response = await Http.PostAsync("/api/blogposts", content);
+        
+        Console.WriteLine($"Response received: {response.StatusCode}");
+        
         if (response.IsSuccessStatusCode)
         {
+            Console.WriteLine("Blog post created successfully");
             newPostTitle = "";
             newPostContent = "";
             selectedFile = null;
             await LoadBlogPosts();
         }
+        else
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"Failed to create blog post: {response.StatusCode} - {errorContent}");
+        }
     }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Exception in CreateBlogPost: {ex.Message}");
+        Console.WriteLine($"Stack trace: {ex.StackTrace}");
+    }
+}
 
     private async Task ToggleLike(int postId)
     {
